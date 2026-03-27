@@ -1,0 +1,78 @@
+/* ============================================
+   《狂熱打蚊子》全域樣式
+   - CSS Reset
+   - Canvas 滿版 + RWD 等比縮放居中
+   - 禁止觸控預設行為
+   ============================================ */
+
+/* --- CSS Reset --- */
+*, *::before, *::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* --- 根元素與 Body --- */
+html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;           /* 禁止卷軸 */
+    background-color: #0a0a0a; /* 畫布外側的深色背景 */
+    /* 禁止觸控裝置的預設行為 */
+    touch-action: none;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+/* --- 遊戲容器：Flexbox 居中 --- */
+#game-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* --- Canvas：維持 16:9 等比縮放 --- */
+#game-canvas {
+    /* 
+     * 使用 aspect-ratio 搭配 max-width/max-height 
+     * 確保 Canvas 永遠維持 16:9 且不超出視窗 
+     */
+    aspect-ratio: 16 / 9;
+    max-width: 100%;
+    max-height: 100%;
+    width: 100%;
+    height: auto;
+
+    /* 像素風格渲染（若需要）可取消下方註解 */
+    /* image-rendering: pixelated; */
+
+    /* Canvas 本身的背景色，用於確認渲染是否正常 */
+    background-color: #1a1a2e;
+
+    /* 遊戲中由 JS 動態加入 .playing class 來隱藏預設游標 */
+    display: block; /* 移除 inline 元素的底部間距 */
+}
+
+#game-canvas.playing {
+    cursor: none;
+}
+
+/* --- 響應式微調 --- */
+@media (max-aspect-ratio: 16/9) {
+    /* 視窗比 16:9 更「高」時，以寬度為基準 */
+    #game-canvas {
+        width: 100%;
+        height: auto;
+    }
+}
+
+@media (min-aspect-ratio: 16/9) {
+    /* 視窗比 16:9 更「寬」時，以高度為基準 */
+    #game-canvas {
+        width: auto;
+        height: 100%;
+    }
+}
