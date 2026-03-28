@@ -1,59 +1,141 @@
 /**
  * UpgradeSystem.js — 升級系統
- * 
- * 管理所有可購買的升級項目：
- * - 蒼蠅拍範圍擴大
- * - 電蚊拍電量上限提升
- * - 殺蟲劑次數增加
- * - 其他被動效果
- * 
- * 玩家使用分數進行購買。
+ *
+ * 管理所有可購買的升級項目。玩家使用分數購買。
  */
 
 export class UpgradeSystem {
     constructor() {
-        /** @type {Array<UpgradeItem>} 所有可用的升級項目 */
         this.upgrades = [];
     }
 
-    /**
-     * 初始化所有升級項目定義
-     */
     init() {
-        // TODO: 定義所有升級項目
-        // 每個項目包含：id, name, description, cost, maxLevel, effect
-        // 例如：
-        // { id: 'swatter_range', name: '蒼蠅拍範圍+', cost: 100, maxLevel: 5, ... }
-        // { id: 'electric_capacity', name: '電量上限+', cost: 150, maxLevel: 5, ... }
-        // { id: 'insecticide_extra', name: '殺蟲劑+1', cost: 200, maxLevel: 3, ... }
+        this.upgrades = [
+            {
+                id: 'swatter_range',
+                name: '拍面擴大',
+                description: '蒼蠅拍攻擊範圍 +15%',
+                icon: '🪰',
+                baseCost: 80,
+                costMultiplier: 1.5,
+                level: 0,
+                maxLevel: 5,
+                effect: (game) => {
+                    game.swatter.range *= 1.15;
+                },
+            },
+            {
+                id: 'electric_capacity',
+                name: '電池升級',
+                description: '電蚊拍電量上限 +20%',
+                icon: '🔋',
+                baseCost: 120,
+                costMultiplier: 1.6,
+                level: 0,
+                maxLevel: 5,
+                effect: (game) => {
+                    if (game.electricSwatter) {
+                        game.electricSwatter.maxCharge *= 1.2;
+                        game.electricSwatter.charge = game.electricSwatter.maxCharge;
+                    }
+                },
+            },
+            {
+                id: 'insecticide_extra',
+                name: '殺蟲劑補充',
+                description: '殺蟲劑使用次數 +1',
+                icon: '💨',
+                baseCost: 200,
+                costMultiplier: 1.8,
+                level: 0,
+                maxLevel: 3,
+                effect: (game) => {
+                    if (game.insecticide) {
+                        game.insecticide.addUses(1);
+                    }
+                },
+            },
+            {
+                id: 'max_hp_up',
+                name: '生命強化',
+                description: 'HP 上限 +20',
+                icon: '❤️',
+                baseCost: 100,
+                costMultiplier: 1.5,
+                level: 0,
+                maxLevel: 5,
+                effect: (game) => {
+                    game.player.maxHp += 20;
+                    game.player.heal(20);
+                },
+            },
+            {
+                id: 'combo_boost',
+                name: 'Combo 加速',
+                description: 'Combo 倍率增長 +50%',
+                icon: '🔥',
+                baseCost: 150,
+                costMultiplier: 1.7,
+                level: 0,
+                maxLevel: 3,
+                effect: (game) => {
+                    // 增加COMBO_CONFIG 的 MULTIPLIER_STEP（動態修改）
+                    game.comboSystem._multiplierStep = (game.comboSystem._multiplierStep || 0.1) * 1.5;
+                },
+            },
+            {
+                id: 'hp_regen',
+                name: '自然回復',
+                description: '每秒回復 0.5 HP',
+                icon: '💚',
+                baseCost: 180,
+                costMultiplier: 2.0,
+                level: 0,
+                maxLevel: 3,
+                effect: (game) => {
+                    game.player._hpRegen = (game.player._hpRegen || 0) + 0.5;
+                },
+            },
+        ];
+    }
+
+    /**
+     * 取得升級的目前費用
+     */
+    getCost(upgrade) {
+        return Math.floor(upgrade.baseCost * Math.pow(upgrade.costMultiplier, upgrade.level));
     }
 
     /**
      * 嘗試購買升級
-     * @param {string} upgradeId - 升級項目 ID
-     * @param {PlayerState} playerState - 玩家狀態
-     * @returns {boolean} 是否購買成功
+     * @returns {boolean}
      */
-    purchase(upgradeId, playerState) {
-        // TODO:
-        // 1. 查找升級項目
-        // 2. 檢查分數是否足夠
-        // 3. 檢查是否已達最大等級
-        // 4. 扣除分數、提升等級、套用效果
+    purchase(upgradeId, playerState, game) {
+        const upgrade = this.upgrades.find(u => u.id === upgradeId);
+        if (!upgrade) return false;
+        if (upgrade.level >= upgrade.maxLevel) return false;
+
+        const cost = this.getCost(upgrade);
+        if (playerState.score < cost) return false;
+
+        playerState.score -= cost;
+        upgrade.level++;
+        upgrade.effect(game);
+
+        return true;
     }
 
-    /**
-     * 取得所有升級項目的目前狀態（供 UI 顯示）
-     * @returns {Array<Object>}
-     */
     getUpgradeList() {
-        // TODO: 回傳包含名稱、描述、費用、目前等級、是否可購買等資訊
+        return this.upgrades.map(u => ({
+            ...u,
+            cost: this.getCost(u),
+            canPurchase: u.level < u.maxLevel,
+        }));
     }
 
-    /**
-     * 重置所有升級（新遊戲時）
-     */
     reset() {
-        // TODO: 重置所有升級等級
+        for (const u of this.upgrades) {
+            u.level = 0;
+        }
     }
 }

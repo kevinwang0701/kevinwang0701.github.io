@@ -1,98 +1,132 @@
 /**
  * SpecialMode.js — 特殊模式管理
- * 
- * 管理兩種特殊遊戲模式：
- * 
- * 1. 關燈模式（Darkness Mode）
- *    - 畫面全黑，僅游標周圍有圓形光暈
- *    - 蚊子在黑暗中飛行，玩家靠光暈搜索
- * 
- * 2. 狂熱時間（Frenzy Time）
- *    - Combo 達到閾值時觸發
- *    - 持續一段時間的無敵狀態
- *    - 大量生怪，分數加倍
+ *
+ * 關燈模式 + 狂熱時間
  */
 
+import { CANVAS_WIDTH, CANVAS_HEIGHT } from '../utils/Constants.js?v=2';
+
 export class SpecialMode {
-    /**
-     * @param {Game} game - 遊戲主控參考
-     */
     constructor(game) {
-        /** @type {Game} */
         this.game = game;
 
         // ── 關燈模式 ──
-        /** @type {boolean} 關燈模式是否啟動 */
         this.isDarknessActive = false;
-
-        /** @type {number} 光暈半徑 */
         this.lightRadius = 150;
+        this._darknessTimer = 0;
+        this._darknessDuration = 0;
 
         // ── 狂熱時間 ──
-        /** @type {boolean} 狂熱時間是否啟動 */
         this.isFrenzyActive = false;
-
-        /** @type {number} 狂熱時間剩餘秒數 */
         this.frenzyTimer = 0;
-
-        /** @type {number} 狂熱時間持續秒數 */
         this.frenzyDuration = 10;
-
-        /** @type {number} 狂熱時間的分數倍率加成 */
         this.frenzyScoreMultiplier = 2.0;
+        this._frenzyPulse = 0;
     }
 
-    /**
-     * 啟動關燈模式
-     */
-    activateDarkness() {
-        // TODO: isDarknessActive = true
+    activateDarkness(duration = 15) {
+        this.isDarknessActive = true;
+        this._darknessTimer = duration;
+        this._darknessDuration = duration;
     }
 
-    /**
-     * 關閉關燈模式
-     */
     deactivateDarkness() {
-        // TODO: isDarknessActive = false
+        this.isDarknessActive = false;
     }
 
-    /**
-     * 啟動狂熱時間
-     */
     activateFrenzy() {
-        // TODO:
-        // 1. isFrenzyActive = true
-        // 2. frenzyTimer = frenzyDuration
-        // 3. 通知 WaveManager 增加生怪速度
+        this.isFrenzyActive = true;
+        this.frenzyTimer = this.frenzyDuration;
+        this._frenzyPulse = 0;
     }
 
-    /**
-     * 每幀更新
-     * @param {number} deltaTime
-     */
     update(deltaTime) {
-        // TODO:
-        // 若狂熱時間啟動中：
-        // 1. 倒數 frenzyTimer
-        // 2. 時間到則結束狂熱時間
+        // 關燈模式計時
+        if (this.isDarknessActive) {
+            this._darknessTimer -= deltaTime;
+            if (this._darknessTimer <= 0) {
+                this.deactivateDarkness();
+            }
+        }
+
+        // 狂熱時間計時
+        if (this.isFrenzyActive) {
+            this.frenzyTimer -= deltaTime;
+            this._frenzyPulse += deltaTime * 8;
+
+            if (this.frenzyTimer <= 0) {
+                this.isFrenzyActive = false;
+            }
+        }
     }
 
-    /**
-     * 繪製特殊模式效果
-     * @param {Renderer} renderer
-     * @param {number} cursorX - 游標 X（關燈模式光暈中心）
-     * @param {number} cursorY - 游標 Y
-     */
     render(renderer, cursorX, cursorY) {
-        // TODO:
-        // 若關燈模式啟動：呼叫 renderer.drawDarknessOverlay()
-        // 若狂熱時間啟動：繪製畫面邊緣的狂熱效果（閃光等）
+        // 關燈模式遮罩
+        if (this.isDarknessActive) {
+            renderer.drawDarknessOverlay(cursorX, cursorY, this.lightRadius);
+
+            // 倒數計時
+            renderer.drawTextWithStroke(
+                `🌙 關燈模式 ${Math.ceil(this._darknessTimer)}s`,
+                CANVAS_WIDTH / 2, 50,
+                '#aaddff', '#000',
+                'bold 24px "Segoe UI", Arial, sans-serif',
+                3, 'center', 'middle'
+            );
+        }
+
+        // 狂熱時間邊框效果
+        if (this.isFrenzyActive) {
+            const pulse = Math.sin(this._frenzyPulse) * 0.15 + 0.2;
+            const ctx = renderer.ctx;
+
+            // 四邊發光
+            renderer.setAlpha(pulse);
+            const gradient = ctx.createLinearGradient(0, 0, 0, 40);
+            gradient.addColorStop(0, '#ff4400');
+            gradient.addColorStop(1, 'transparent');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, CANVAS_WIDTH, 40);
+
+            const gradient2 = ctx.createLinearGradient(0, CANVAS_HEIGHT, 0, CANVAS_HEIGHT - 40);
+            gradient2.addColorStop(0, '#ff4400');
+            gradient2.addColorStop(1, 'transparent');
+            ctx.fillStyle = gradient2;
+            ctx.fillRect(0, CANVAS_HEIGHT - 40, CANVAS_WIDTH, 40);
+            renderer.resetAlpha();
+
+            // 狂熱文字
+            const scale = 1 + Math.sin(this._frenzyPulse * 2) * 0.05;
+            renderer.save();
+            ctx.translate(CANVAS_WIDTH / 2, 100);
+            ctx.scale(scale, scale);
+            renderer.drawTextWithStroke(
+                `🔥 狂熱時間！ ${Math.ceil(this.frenzyTimer)}s 🔥`,
+                0, 0,
+                '#ff6600', '#000',
+                'bold 32px "Segoe UI", "Microsoft JhengHei", Arial, sans-serif',
+                4, 'center', 'middle'
+            );
+            renderer.drawTextWithStroke(
+                `分數 x${this.frenzyScoreMultiplier}`,
+                0, 35,
+                '#ffcc00', '#000',
+                'bold 22px "Segoe UI", Arial, sans-serif',
+                3, 'center', 'middle'
+            );
+            renderer.restore();
+        }
     }
 
-    /**
-     * 重置（新遊戲時）
-     */
+    /** 取得目前的分數倍率加成 */
+    getScoreMultiplier() {
+        return this.isFrenzyActive ? this.frenzyScoreMultiplier : 1.0;
+    }
+
     reset() {
-        // TODO: 關閉所有模式，重置計時器
+        this.isDarknessActive = false;
+        this._darknessTimer = 0;
+        this.isFrenzyActive = false;
+        this.frenzyTimer = 0;
     }
 }
