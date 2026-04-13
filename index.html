@@ -1,0 +1,1043 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>21點策略顧問 — Blackjack Strategy Advisor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --felt: #0a3d1f;
+      --felt-dark: #061f10;
+      --felt-light: #0d4f28;
+      --gold: #c9a84c;
+      --gold-light: #e5c76b;
+      --card-bg: #fff;
+      --card-border: #ddd;
+      --text-light: #f0ead6;
+      --text-muted: #a89b7a;
+      --hit: #e07b20;
+      --stand: #27ae60;
+      --double: #2980b9;
+      --split: #8e44ad;
+      --surrender: #7f8c8d;
+      --bust: #c0392b;
+      --bj: #c9a84c;
+    }
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: radial-gradient(ellipse at 50% 0%, var(--felt-light) 0%, var(--felt) 40%, var(--felt-dark) 100%);
+      background-attachment: fixed;
+      min-height: 100vh;
+      color: var(--text-light);
+      padding: 0 0 60px;
+    }
+
+    /* Felt texture overlay */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        repeating-linear-gradient(45deg, rgba(255,255,255,0.015) 0px, rgba(255,255,255,0.015) 1px, transparent 1px, transparent 8px),
+        repeating-linear-gradient(-45deg, rgba(255,255,255,0.015) 0px, rgba(255,255,255,0.015) 1px, transparent 1px, transparent 8px);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── HEADER ─────────────────────────────────── */
+    header {
+      text-align: center;
+      padding: 40px 16px 28px;
+      position: relative;
+      z-index: 1;
+      border-bottom: 1px solid rgba(201,168,76,0.25);
+      margin-bottom: 32px;
+    }
+
+    header h1 {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: clamp(1.8rem, 5vw, 3rem);
+      color: var(--gold);
+      text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+      letter-spacing: 0.02em;
+    }
+
+    header p {
+      margin-top: 8px;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    /* ── LAYOUT ─────────────────────────────────── */
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 0 16px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .panel {
+      background: rgba(0,0,0,0.25);
+      border: 1px solid rgba(201,168,76,0.2);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+
+    .panel h2 {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: 1.1rem;
+      color: var(--gold);
+      margin-bottom: 16px;
+      letter-spacing: 0.05em;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .panel h2 .step {
+      background: var(--gold);
+      color: #000;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      font-size: 0.75rem;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    /* ── CARD BUTTONS ────────────────────────────── */
+    .card-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .card-btn {
+      background: var(--card-bg);
+      color: #1a1a1a;
+      border: 2px solid var(--card-border);
+      border-radius: 8px;
+      padding: 0;
+      width: 48px;
+      height: 62px;
+      font-size: 1rem;
+      font-weight: 700;
+      font-family: 'Inter', sans-serif;
+      cursor: pointer;
+      transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      user-select: none;
+      position: relative;
+    }
+
+    .card-btn:hover {
+      transform: translateY(-3px);
+      border-color: var(--gold);
+      box-shadow: 0 6px 16px rgba(0,0,0,0.4), 0 0 0 1px rgba(201,168,76,0.4);
+    }
+
+    .card-btn:active {
+      transform: translateY(0);
+    }
+
+    .card-btn.selected {
+      background: var(--gold);
+      border-color: var(--gold-light);
+      color: #000;
+      box-shadow: 0 4px 12px rgba(201,168,76,0.4);
+    }
+
+    .card-btn.red { color: #c0392b; }
+    .card-btn.red.selected { color: #7a0000; }
+
+    /* ── SELECTED HAND CHIPS ─────────────────────── */
+    #selected-hand {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 16px;
+      min-height: 52px;
+      align-items: center;
+    }
+
+    .hand-chip {
+      background: var(--card-bg);
+      border: 2px solid var(--gold);
+      border-radius: 8px;
+      width: 42px;
+      height: 52px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      font-weight: 700;
+      color: #1a1a1a;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.3);
+      animation: cardDeal 0.2s ease;
+      position: relative;
+    }
+
+    .hand-chip.red { color: #c0392b; }
+
+    @keyframes cardDeal {
+      from { transform: translateY(-12px) scale(0.85); opacity: 0; }
+      to   { transform: translateY(0) scale(1); opacity: 1; }
+    }
+
+    #hand-info {
+      margin-top: 12px;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      min-height: 20px;
+    }
+
+    #hand-info span {
+      color: var(--text-light);
+      font-weight: 600;
+    }
+
+    /* ── BUTTONS ROW ─────────────────────────────── */
+    .btn-row {
+      margin-top: 16px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .btn-secondary {
+      background: transparent;
+      border: 1px solid rgba(201,168,76,0.4);
+      color: var(--text-muted);
+      padding: 8px 18px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      transition: border-color 0.15s, color 0.15s;
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--gold);
+      color: var(--gold);
+    }
+
+    /* ── RECOMMENDATION ──────────────────────────── */
+    #recommendation {
+      text-align: center;
+      min-height: 140px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+    }
+
+    #action-display {
+      font-size: clamp(2rem, 8vw, 3.5rem);
+      font-family: 'Playfair Display', Georgia, serif;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-shadow: 0 3px 12px rgba(0,0,0,0.5);
+      transition: all 0.25s ease;
+      min-height: 1.2em;
+    }
+
+    #action-display.action-H  { color: var(--hit); }
+    #action-display.action-S  { color: var(--stand); }
+    #action-display.action-D  { color: var(--double); }
+    #action-display.action-P  { color: var(--split); }
+    #action-display.action-R  { color: var(--surrender); }
+    #action-display.action-BUST { color: var(--bust); }
+    #action-display.action-BJ { color: var(--bj); }
+    #action-display.action-WAIT { color: var(--text-muted); font-size: clamp(1rem, 3vw, 1.3rem); font-weight: 400; letter-spacing: 0; }
+
+    #action-explanation {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      max-width: 560px;
+      line-height: 1.6;
+      min-height: 1.6em;
+    }
+
+    .action-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .action-icon {
+      font-size: 0.6em;
+    }
+
+    /* ── STRATEGY TABLES ─────────────────────────── */
+    details {
+      background: rgba(0,0,0,0.2);
+      border: 1px solid rgba(201,168,76,0.15);
+      border-radius: 12px;
+      margin-bottom: 20px;
+      overflow: hidden;
+    }
+
+    summary {
+      padding: 16px 24px;
+      cursor: pointer;
+      font-family: 'Playfair Display', Georgia, serif;
+      color: var(--gold);
+      font-size: 1rem;
+      letter-spacing: 0.05em;
+      list-style: none;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      user-select: none;
+    }
+
+    summary::-webkit-details-marker { display: none; }
+
+    summary::after {
+      content: '▼';
+      font-size: 0.7rem;
+      transition: transform 0.2s;
+      color: var(--text-muted);
+    }
+
+    details[open] summary::after { transform: rotate(180deg); }
+
+    .table-container {
+      padding: 0 20px 20px;
+      overflow-x: auto;
+    }
+
+    .strategy-table-title {
+      font-family: 'Playfair Display', Georgia, serif;
+      color: var(--gold-light);
+      font-size: 0.95rem;
+      margin: 16px 0 8px;
+      letter-spacing: 0.05em;
+    }
+
+    .strategy-table {
+      border-collapse: collapse;
+      font-size: 0.78rem;
+      font-weight: 600;
+      width: 100%;
+      min-width: 420px;
+    }
+
+    .strategy-table th,
+    .strategy-table td {
+      border: 1px solid rgba(255,255,255,0.08);
+      padding: 5px 6px;
+      text-align: center;
+      min-width: 32px;
+    }
+
+    .strategy-table th {
+      background: rgba(0,0,0,0.3);
+      color: var(--text-muted);
+      font-size: 0.72rem;
+      letter-spacing: 0.05em;
+    }
+
+    .strategy-table td.cell-H  { background: rgba(224,123,32,0.18); color: #f0a060; }
+    .strategy-table td.cell-D  { background: rgba(41,128,185,0.18); color: #6fb3e0; }
+    .strategy-table td.cell-Ds { background: rgba(41,128,185,0.18); color: #6fb3e0; }
+    .strategy-table td.cell-S  { background: rgba(39,174,96,0.18);  color: #5dd98a; }
+    .strategy-table td.cell-P  { background: rgba(142,68,173,0.18); color: #c47fe8; }
+    .strategy-table td.cell-Ph { background: rgba(142,68,173,0.18); color: #c47fe8; }
+    .strategy-table td.cell-Pd { background: rgba(142,68,173,0.18); color: #c47fe8; }
+    .strategy-table td.cell-R  { background: rgba(127,140,141,0.18); color: #a8b8b9; }
+    .strategy-table td.cell-Rs { background: rgba(127,140,141,0.18); color: #a8b8b9; }
+    .strategy-table td.cell-Rp { background: rgba(127,140,141,0.18); color: #a8b8b9; }
+
+    .strategy-table td.highlighted {
+      outline: 2px solid var(--gold);
+      outline-offset: -2px;
+      filter: brightness(1.8);
+      position: relative;
+      z-index: 1;
+    }
+
+    .strategy-table .row-header {
+      background: rgba(0,0,0,0.25);
+      color: var(--text-muted);
+      font-weight: 600;
+      text-align: left;
+      padding-left: 10px;
+      white-space: nowrap;
+    }
+
+    /* Legend */
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 16px;
+      font-size: 0.75rem;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      color: var(--text-muted);
+    }
+
+    .legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 2px;
+    }
+
+    /* ── FOOTER ─────────────────────────────────── */
+    footer {
+      text-align: center;
+      margin-top: 40px;
+      padding: 0 16px;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      line-height: 1.7;
+      position: relative;
+      z-index: 1;
+    }
+
+    footer a { color: var(--gold); text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+
+    /* ── PULSE ANIMATION ────────────────────────── */
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.65; }
+    }
+
+    .pulsing { animation: pulse 1.8s ease infinite; }
+
+    /* ── FADE IN ─────────────────────────────────── */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.95); }
+      to   { opacity: 1; transform: scale(1); }
+    }
+
+    .fade-in { animation: fadeIn 0.3s ease; }
+
+    /* ── MOBILE TWEAKS ───────────────────────────── */
+    @media (max-width: 480px) {
+      .panel { padding: 16px; }
+      .card-btn { width: 44px; height: 56px; font-size: 0.9rem; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>♠ 21點策略顧問 ♥</h1>
+  <p>6副牌 &nbsp;·&nbsp; 莊家軟17停牌 &nbsp;·&nbsp; 基本策略 &nbsp;·&nbsp; 降低莊家優勢至 ~0.5%</p>
+</header>
+
+<div class="container">
+
+  <!-- ① Dealer upcard -->
+  <div class="panel">
+    <h2><span class="step">1</span> 選擇莊家明牌</h2>
+    <div class="card-row" id="dealer-cards"></div>
+  </div>
+
+  <!-- ② Player hand -->
+  <div class="panel">
+    <h2><span class="step">2</span> 選擇你的牌（可連續點選加牌）</h2>
+    <div class="card-row" id="player-cards"></div>
+    <div id="selected-hand"></div>
+    <div id="hand-info"></div>
+    <div class="btn-row">
+      <button class="btn-secondary" id="clear-btn">✕ 清除手牌</button>
+    </div>
+  </div>
+
+  <!-- ③ Recommendation -->
+  <div class="panel" id="rec-panel">
+    <h2><span class="step">3</span> 最佳策略建議</h2>
+    <div id="recommendation">
+      <div id="action-display" class="action-WAIT pulsing">請先選擇莊家明牌與你的手牌</div>
+      <div id="action-explanation"></div>
+    </div>
+  </div>
+
+  <!-- Strategy reference tables -->
+  <details>
+    <summary>查看完整策略表</summary>
+    <div class="table-container" id="strategy-tables"></div>
+  </details>
+
+</div>
+
+<footer>
+  <p>本網站基於數學最優的21點基本策略，適用於6副牌、莊家軟17停牌的規則。</p>
+  <p>策略遵循基本策略可將莊家優勢降低至約 0.5%，但不能保證每局獲勝。</p>
+</footer>
+
+<script>
+'use strict';
+
+// ─── STRATEGY DATA ──────────────────────────────────────────────────────────
+// Dealer upcard index: 0=2, 1=3, 2=4, 3=5, 4=6, 5=7, 6=8, 7=9, 8=10, 9=A
+const DEALER_LABELS = ['2','3','4','5','6','7','8','9','10','A'];
+
+// Hard totals (key = hand total, 8–17; ≤7 always H, ≥17 always S)
+const HARD = {
+   8: ['H','H','H','H','H','H','H','H','H','H'],
+   9: ['H','D','D','D','D','H','H','H','H','H'],
+  10: ['D','D','D','D','D','D','D','D','H','H'],
+  11: ['D','D','D','D','D','D','D','D','D','H'],
+  12: ['H','H','S','S','S','H','H','H','H','H'],
+  13: ['S','S','S','S','S','H','H','H','H','H'],
+  14: ['S','S','S','S','S','H','H','H','H','H'],
+  15: ['S','S','S','S','S','H','H','H','R','H'],
+  16: ['S','S','S','S','S','H','H','R','R','R'],
+  17: ['S','S','S','S','S','S','S','S','S','S'],
+};
+
+// Soft totals: key = non-ace value (2–9)
+// A+2 = soft 13, A+9 = soft 20
+const SOFT = {
+  2: ['H','H','H','D','D','H','H','H','H','H'],
+  3: ['H','H','H','D','D','H','H','H','H','H'],
+  4: ['H','H','D','D','D','H','H','H','H','H'],
+  5: ['H','H','D','D','D','H','H','H','H','H'],
+  6: ['H','D','D','D','D','H','H','H','H','H'],
+  7: ['S','Ds','Ds','Ds','Ds','S','S','H','H','H'],
+  8: ['S','S','S','S','Ds','S','S','S','S','S'],
+  9: ['S','S','S','S','S','S','S','S','S','S'],
+};
+
+// Pairs: key = card value (2–10, 11=Ace pair)
+const PAIRS = {
+   2: ['Ph','Ph','P','P','P','P','H','H','H','H'],
+   3: ['Ph','Ph','P','P','P','P','H','H','H','H'],
+   4: ['H','H','H','Ph','Ph','H','H','H','H','H'],
+   5: ['D','D','D','D','D','D','D','D','H','H'],
+   6: ['Ph','P','P','P','P','H','H','H','H','H'],
+   7: ['P','P','P','P','P','P','H','H','H','H'],
+   8: ['P','P','P','P','P','P','P','P','P','Rp'],
+   9: ['P','P','P','P','P','S','P','P','S','S'],
+  10: ['S','S','S','S','S','S','S','S','S','S'],
+  11: ['P','P','P','P','P','P','P','P','P','P'],
+};
+
+// Action display info
+const ACTION_INFO = {
+  H:    { zh: '要牌（HIT）',        en: 'HIT',       code: 'H',    icon: '👆' },
+  S:    { zh: '停牌（STAND）',      en: 'STAND',     code: 'S',    icon: '✋' },
+  D:    { zh: '加倍（DOUBLE）',     en: 'DOUBLE DOWN', code: 'D',  icon: '⬆' },
+  P:    { zh: '分牌（SPLIT）',      en: 'SPLIT',     code: 'P',    icon: '↔' },
+  R:    { zh: '投降（SURRENDER）',  en: 'SURRENDER', code: 'R',    icon: '🏳' },
+  BUST: { zh: '爆牌（BUST）',       en: 'BUST',      code: 'BUST', icon: '💥' },
+  BJ:   { zh: '黑傑克！（BLACKJACK）', en: 'BLACKJACK', code: 'BJ', icon: '🎉' },
+};
+
+const EXPLANATIONS = {
+  H: {
+    hard_low:  '你的點數太低，要牌可以改善手牌，爆牌風險也不大。',
+    hard_mid:  '莊家牌力強，你的手牌偏弱，繼續要牌爭取更好的結果。',
+    soft:      '這手軟牌可以安全要牌——即使下一張大，Ace 仍可當 1 點。',
+    default:   '根據基本策略，要牌是此局面的最佳選擇。',
+  },
+  S: {
+    hard_good: '你的點數夠高，莊家爆牌機率大，停牌讓莊家自爆。',
+    soft:      '軟18或更高對莊家低牌時足夠強勢，停牌保住優勢。',
+    default:   '停牌是此局面的最佳決策，不要冒爆牌的風險。',
+  },
+  D:    '加倍！數學最優——將賭注加倍，只再拿一張牌，期望值最高。',
+  P:    '分牌比打一手弱牌更有利，將這對牌拆成兩手分別出擊。',
+  R:    '投降放棄一半賭注，比繼續打下去損失更少——這是正確的止損策略。',
+  BUST: '你的手牌超過 21 點，本局結束。請重新開始下一手。',
+  BJ:   '恭喜！你拿到黑傑克（21點），通常賠率為 3:2！',
+};
+
+// ─── HAND EVALUATION ────────────────────────────────────────────────────────
+function evaluateHand(cards) {
+  if (cards.length === 0) return null;
+
+  // Pair detection: only on exactly 2 cards with same value
+  if (cards.length === 2 && cards[0] === cards[1]) {
+    const pv = cards[0];
+    const sum = pv === 11 ? 22 : pv * 2;
+    return { type: 'pair', value: sum > 21 ? sum - 10 : sum, pairCard: pv };
+  }
+
+  // Count: Ace = 11, then reduce
+  let sum = 0;
+  let aces = 0;
+  for (const c of cards) {
+    if (c === 11) { sum += 11; aces++; }
+    else sum += c;
+  }
+  while (sum > 21 && aces > 0) { sum -= 10; aces--; }
+
+  // Soft: at least one ace still counting as 11
+  if (aces > 0 && sum <= 21) {
+    const softKey = sum - 11; // non-ace portion
+    return { type: 'soft', value: sum, softKey };
+  }
+
+  return { type: 'hard', value: sum };
+}
+
+function handDescription(hand, cards) {
+  if (!hand) return '';
+  if (hand.type === 'pair') {
+    const label = hand.pairCard === 11 ? 'A' : String(hand.pairCard);
+    return `一對 ${label}（Pair of ${label}s）`;
+  }
+  if (hand.type === 'soft') return `軟 ${hand.value}（Soft ${hand.value}）`;
+  if (hand.value > 21) return `爆牌 ${hand.value}（Bust）`;
+  return `硬 ${hand.value}（Hard ${hand.value}）`;
+}
+
+// ─── STRATEGY LOOKUP ────────────────────────────────────────────────────────
+function resolveCode(code, numCards) {
+  const canDouble    = numCards === 2;
+  const canSplit     = numCards === 2;
+  const canSurrender = numCards === 2;
+
+  switch (code) {
+    case 'H':  return 'H';
+    case 'S':  return 'S';
+    case 'D':  return canDouble    ? 'D' : 'H';
+    case 'Ds': return canDouble    ? 'D' : 'S';
+    case 'P':  return 'P';
+    case 'Ph': return canSplit     ? 'P' : 'H';
+    case 'Pd': return canSplit     ? 'P' : (canDouble ? 'D' : 'H');
+    case 'R':  return canSurrender ? 'R' : 'H';
+    case 'Rs': return canSurrender ? 'R' : 'S';
+    case 'Rp': return canSurrender ? 'R' : 'P';
+    default:   return 'H';
+  }
+}
+
+function getRecommendation(playerCards, dealerCard) {
+  if (!dealerCard || playerCards.length < 2) return null;
+
+  const hand = evaluateHand(playerCards);
+  if (!hand) return null;
+
+  // Special outcomes
+  if (hand.value > 21) return { final: 'BUST', rawCode: 'BUST' };
+  if (playerCards.length === 2 && hand.value === 21) return { final: 'BJ', rawCode: 'BJ' };
+
+  const di = DEALER_LABELS.indexOf(dealerCard === 11 ? 'A' : String(dealerCard));
+  let rawCode;
+
+  if (hand.type === 'pair') {
+    const pk = hand.pairCard; // 2–11
+    rawCode = PAIRS[pk] ? PAIRS[pk][di] : 'S';
+  } else if (hand.type === 'soft') {
+    const sk = hand.softKey;
+    if (sk >= 2 && sk <= 9) rawCode = SOFT[sk][di];
+    else rawCode = 'S'; // soft 20/21
+  } else {
+    // Hard
+    if (hand.value <= 7) {
+      rawCode = 'H';
+    } else if (hand.value >= 17) {
+      // Hard 17: check surrender for 17 vs dealer-specific rules
+      // Hard 17 always Stand in standard strategy
+      rawCode = 'S';
+    } else {
+      const hv = Math.min(hand.value, 16);
+      const lookup = Math.max(hv, 8);
+      rawCode = HARD[lookup] ? HARD[lookup][di] : 'H';
+    }
+  }
+
+  const final = resolveCode(rawCode, playerCards.length);
+  return { final, rawCode, hand };
+}
+
+function getExplanation(result) {
+  if (!result) return '';
+  const { final, hand } = result;
+  const ex = EXPLANATIONS;
+  if (final === 'BUST') return ex.BUST;
+  if (final === 'BJ')   return ex.BJ;
+  if (final === 'D')    return ex.D;
+  if (final === 'P')    return ex.P;
+  if (final === 'R')    return ex.R;
+  if (final === 'H') {
+    if (!hand) return ex.H.default;
+    if (hand.type === 'soft') return ex.H.soft;
+    if (hand.value <= 11) return ex.H.hard_low;
+    return ex.H.hard_mid;
+  }
+  if (final === 'S') {
+    if (!hand) return ex.S.default;
+    if (hand.type === 'soft') return ex.S.soft;
+    if (hand.value >= 18) return ex.S.hard_good;
+    return ex.S.default;
+  }
+  return '';
+}
+
+// ─── STATE ───────────────────────────────────────────────────────────────────
+const state = {
+  playerCards: [],  // array of numeric values (11 = Ace)
+  dealerCard: null, // numeric value
+};
+
+// ─── CARD VALUE MAP ───────────────────────────────────────────────────────────
+const CARD_VALUES = {
+  '2':2,'3':3,'4':4,'5':5,'6':6,'7':7,'8':8,'9':9,'10':10,
+  'J':10,'Q':10,'K':10,'A':11
+};
+const CARD_LABELS = ['2','3','4','5','6','7','8','9','10','J','Q','K','A'];
+const RED_CARDS = new Set(['J','Q','K','A']); // visual red-suit hint
+
+const DEALER_CARD_LABELS = ['2','3','4','5','6','7','8','9','10','A'];
+
+// ─── DOM REFS ────────────────────────────────────────────────────────────────
+const $dealer   = document.getElementById('dealer-cards');
+const $player   = document.getElementById('player-cards');
+const $hand     = document.getElementById('selected-hand');
+const $info     = document.getElementById('hand-info');
+const $action   = document.getElementById('action-display');
+const $explain  = document.getElementById('action-explanation');
+const $clear    = document.getElementById('clear-btn');
+const $tables   = document.getElementById('strategy-tables');
+
+// ─── BUILD BUTTONS ────────────────────────────────────────────────────────────
+function buildButtons() {
+  // Dealer
+  DEALER_CARD_LABELS.forEach(label => {
+    const btn = document.createElement('button');
+    btn.className = 'card-btn' + (RED_CARDS.has(label) ? ' red' : '');
+    btn.textContent = label;
+    btn.dataset.label = label;
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#dealer-cards .card-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      state.dealerCard = CARD_VALUES[label];
+      update();
+    });
+    $dealer.appendChild(btn);
+  });
+
+  // Player
+  CARD_LABELS.forEach(label => {
+    const btn = document.createElement('button');
+    btn.className = 'card-btn' + (RED_CARDS.has(label) ? ' red' : '');
+    btn.textContent = label;
+    btn.dataset.label = label;
+    btn.addEventListener('click', () => {
+      state.playerCards.push(CARD_VALUES[label]);
+      update();
+    });
+    $player.appendChild(btn);
+  });
+}
+
+// ─── UPDATE UI ────────────────────────────────────────────────────────────────
+function update() {
+  updateHandDisplay();
+  updateRecommendation();
+  updateTableHighlight();
+}
+
+function updateHandDisplay() {
+  // Chips
+  $hand.innerHTML = '';
+  state.playerCards.forEach(v => {
+    const chip = document.createElement('div');
+    const label = v === 11 ? 'A' : v === 10 ? '10' : String(v);
+    const isRed = (label === 'A');
+    chip.className = 'hand-chip' + (isRed ? ' red' : '');
+    chip.textContent = label;
+    $hand.appendChild(chip);
+  });
+
+  // Hand info
+  if (state.playerCards.length === 0) {
+    $info.innerHTML = '';
+    return;
+  }
+  const hand = evaluateHand(state.playerCards);
+  $info.innerHTML = `手牌：<span>${handDescription(hand, state.playerCards)}</span>`;
+}
+
+function updateRecommendation() {
+  if (state.playerCards.length === 0 && !state.dealerCard) {
+    setWait('請先選擇莊家明牌與你的手牌');
+    return;
+  }
+  if (!state.dealerCard) {
+    setWait('請選擇莊家明牌（步驟 1）');
+    return;
+  }
+  if (state.playerCards.length === 0) {
+    setWait('請選擇你的手牌（步驟 2）');
+    return;
+  }
+  if (state.playerCards.length === 1) {
+    setWait('再點選一張牌以獲得策略建議…');
+    return;
+  }
+
+  const result = getRecommendation(state.playerCards, state.dealerCard);
+  if (!result) { setWait('請繼續選牌'); return; }
+
+  const info = ACTION_INFO[result.final];
+  const explanation = getExplanation(result);
+
+  $action.className = `action-${result.final} fade-in`;
+  $action.textContent = info.zh;
+  $explain.textContent = explanation;
+
+  // Re-trigger animation
+  void $action.offsetWidth;
+}
+
+function setWait(msg) {
+  $action.className = 'action-WAIT pulsing';
+  $action.textContent = msg;
+  $explain.textContent = '';
+}
+
+// ─── STRATEGY TABLES ─────────────────────────────────────────────────────────
+function buildStrategyTables() {
+  $tables.innerHTML = '';
+
+  // Legend
+  const legend = document.createElement('div');
+  legend.className = 'legend';
+  const legendItems = [
+    { code: 'H',  color: 'rgba(224,123,32,0.6)',  label: 'H = 要牌' },
+    { code: 'S',  color: 'rgba(39,174,96,0.6)',   label: 'S = 停牌' },
+    { code: 'D',  color: 'rgba(41,128,185,0.6)',  label: 'D = 加倍（否則要牌）' },
+    { code: 'Ds', color: 'rgba(41,128,185,0.6)',  label: 'Ds = 加倍（否則停牌）' },
+    { code: 'P',  color: 'rgba(142,68,173,0.6)',  label: 'P = 分牌' },
+    { code: 'R',  color: 'rgba(127,140,141,0.6)', label: 'R = 投降' },
+  ];
+  legendItems.forEach(({code, color, label}) => {
+    const item = document.createElement('div');
+    item.className = 'legend-item';
+    item.innerHTML = `<div class="legend-dot" style="background:${color}"></div><span>${label}</span>`;
+    legend.appendChild(item);
+  });
+  $tables.appendChild(legend);
+
+  buildHardTable();
+  buildSoftTable();
+  buildPairsTable();
+}
+
+function makeTable(id) {
+  const t = document.createElement('table');
+  t.className = 'strategy-table';
+  t.id = id;
+  return t;
+}
+
+function makeHeaderRow() {
+  const tr = document.createElement('tr');
+  const th0 = document.createElement('th');
+  th0.textContent = '手牌 \\ 莊家';
+  tr.appendChild(th0);
+  DEALER_LABELS.forEach(d => {
+    const th = document.createElement('th');
+    th.textContent = d;
+    tr.appendChild(th);
+  });
+  return tr;
+}
+
+function buildHardTable() {
+  const title = document.createElement('div');
+  title.className = 'strategy-table-title';
+  title.textContent = '◆ 硬牌策略表（Hard Totals）';
+  $tables.appendChild(title);
+
+  const table = makeTable('tbl-hard');
+  const thead = document.createElement('thead');
+  thead.appendChild(makeHeaderRow());
+  table.appendChild(thead);
+
+  const tbody = document.createElement('tbody');
+
+  // Rows for 8–16 (17+ always Stand, ≤7 always Hit)
+  const rows = [
+    { label: '≤7', data: ['H','H','H','H','H','H','H','H','H','H'], key: 'le7' },
+    { label: '8',  data: HARD[8],  key: 8 },
+    { label: '9',  data: HARD[9],  key: 9 },
+    { label: '10', data: HARD[10], key: 10 },
+    { label: '11', data: HARD[11], key: 11 },
+    { label: '12', data: HARD[12], key: 12 },
+    { label: '13', data: HARD[13], key: 13 },
+    { label: '14', data: HARD[14], key: 14 },
+    { label: '15', data: HARD[15], key: 15 },
+    { label: '16', data: HARD[16], key: 16 },
+    { label: '17+', data: ['S','S','S','S','S','S','S','S','S','S'], key: 'ge17' },
+  ];
+
+  rows.forEach(({label, data, key}) => {
+    const tr = document.createElement('tr');
+    const th = document.createElement('th');
+    th.className = 'row-header';
+    th.textContent = label;
+    tr.appendChild(th);
+    data.forEach((code, di) => {
+      const td = document.createElement('td');
+      td.className = `cell-${code}`;
+      td.textContent = code;
+      td.dataset.table = 'hard';
+      td.dataset.hand = String(key);
+      td.dataset.dealer = di;
+      tr.appendChild(td);
+    });
+    tbody.appendChild(tr);
+  });
+
+  table.appendChild(tbody);
+  $tables.appendChild(table);
+}
+
+function buildSoftTable() {
+  const title = document.createElement('div');
+  title.className = 'strategy-table-title';
+  title.textContent = '◆ 軟牌策略表（Soft Totals — Ace + X）';
+  $tables.appendChild(title);
+
+  const table = makeTable('tbl-soft');
+  const thead = document.createElement('thead');
+  thead.appendChild(makeHeaderRow());
+  table.appendChild(thead);
+
+  const tbody = document.createElement('tbody');
+  for (let sk = 2; sk <= 9; sk++) {
+    const tr = document.createElement('tr');
+    const th = document.createElement('th');
+    th.className = 'row-header';
+    th.textContent = `A+${sk}（軟${sk+11}）`;
+    tr.appendChild(th);
+    SOFT[sk].forEach((code, di) => {
+      const td = document.createElement('td');
+      td.className = `cell-${code}`;
+      td.textContent = code;
+      td.dataset.table = 'soft';
+      td.dataset.hand = String(sk);
+      td.dataset.dealer = di;
+      tr.appendChild(td);
+    });
+    tbody.appendChild(tr);
+  }
+  table.appendChild(tbody);
+  $tables.appendChild(table);
+}
+
+function buildPairsTable() {
+  const title = document.createElement('div');
+  title.className = 'strategy-table-title';
+  title.textContent = '◆ 對子策略表（Pairs）';
+  $tables.appendChild(title);
+
+  const table = makeTable('tbl-pairs');
+  const thead = document.createElement('thead');
+  thead.appendChild(makeHeaderRow());
+  table.appendChild(thead);
+
+  const tbody = document.createElement('tbody');
+  const pairRows = [
+    {key:2,  label:'2+2'},
+    {key:3,  label:'3+3'},
+    {key:4,  label:'4+4'},
+    {key:5,  label:'5+5'},
+    {key:6,  label:'6+6'},
+    {key:7,  label:'7+7'},
+    {key:8,  label:'8+8'},
+    {key:9,  label:'9+9'},
+    {key:10, label:'10+10'},
+    {key:11, label:'A+A'},
+  ];
+  pairRows.forEach(({key, label}) => {
+    const tr = document.createElement('tr');
+    const th = document.createElement('th');
+    th.className = 'row-header';
+    th.textContent = label;
+    tr.appendChild(th);
+    PAIRS[key].forEach((code, di) => {
+      const td = document.createElement('td');
+      td.className = `cell-${code}`;
+      td.textContent = code;
+      td.dataset.table = 'pairs';
+      td.dataset.hand = String(key);
+      td.dataset.dealer = di;
+      tr.appendChild(td);
+    });
+    tbody.appendChild(tr);
+  });
+  table.appendChild(tbody);
+  $tables.appendChild(table);
+}
+
+// ─── TABLE HIGHLIGHT ─────────────────────────────────────────────────────────
+function updateTableHighlight() {
+  // Clear previous highlights
+  document.querySelectorAll('.strategy-table td.highlighted').forEach(td => td.classList.remove('highlighted'));
+
+  if (!state.dealerCard || state.playerCards.length < 2) return;
+
+  const hand = evaluateHand(state.playerCards);
+  if (!hand || hand.value > 21) return;
+  if (state.playerCards.length === 2 && hand.value === 21) return;
+
+  const dealerLabel = state.dealerCard === 11 ? 'A' : String(state.dealerCard);
+  const di = DEALER_LABELS.indexOf(dealerLabel);
+
+  let tableId, handKey;
+
+  if (hand.type === 'pair') {
+    tableId = 'tbl-pairs';
+    handKey = String(hand.pairCard);
+  } else if (hand.type === 'soft') {
+    tableId = 'tbl-soft';
+    handKey = String(hand.softKey);
+  } else {
+    tableId = 'tbl-hard';
+    if (hand.value <= 7) handKey = 'le7';
+    else if (hand.value >= 17) handKey = 'ge17';
+    else handKey = String(hand.value);
+  }
+
+  const cell = document.querySelector(`#${tableId} td[data-hand="${handKey}"][data-dealer="${di}"]`);
+  if (cell) {
+    cell.classList.add('highlighted');
+    // Open the details panel if closed
+    const details = cell.closest('details');
+    if (details && !details.open) details.open = true;
+    cell.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+}
+
+// ─── CLEAR ───────────────────────────────────────────────────────────────────
+$clear.addEventListener('click', () => {
+  state.playerCards = [];
+  update();
+});
+
+// ─── INIT ────────────────────────────────────────────────────────────────────
+buildButtons();
+buildStrategyTables();
+</script>
+</body>
+</html>
