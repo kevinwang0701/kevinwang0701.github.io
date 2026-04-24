@@ -5,9 +5,9 @@
  * 有自動離場的存活時間。
  */
 
-import { Entity } from './Entity.js?v=2';
-import { ENEMY_CONFIG, CANVAS_WIDTH, CANVAS_HEIGHT } from '../utils/Constants.js?v=2';
-import { randomRange, randomInt } from '../utils/MathUtils.js?v=2';
+import { Entity } from './Entity.js?v=3';
+import { ENEMY_CONFIG, CANVAS_WIDTH, CANVAS_HEIGHT } from '../utils/Constants.js?v=3';
+import { randomRange, randomInt } from '../utils/MathUtils.js?v=3';
 
 export class Trap extends Entity {
     constructor(x, y, type = 'bee') {

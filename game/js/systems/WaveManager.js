@@ -5,14 +5,14 @@
  * 整合所有敵人類型、Boss 波、陷阱生成。
  */
 
-import { Mosquito } from '../entities/Mosquito.js?v=2';
-import { AgileMosquito } from '../entities/AgileMosquito.js?v=2';
-import { ArmoredMosquito } from '../entities/ArmoredMosquito.js?v=2';
-import { StealthMosquito } from '../entities/StealthMosquito.js?v=2';
-import { Trap } from '../entities/Trap.js?v=2';
-import { Boss } from '../entities/Boss.js?v=2';
-import { CANVAS_WIDTH, CANVAS_HEIGHT } from '../utils/Constants.js?v=2';
-import { randomRange, randomInt } from '../utils/MathUtils.js?v=2';
+import { Mosquito } from '../entities/Mosquito.js?v=3';
+import { AgileMosquito } from '../entities/AgileMosquito.js?v=3';
+import { ArmoredMosquito } from '../entities/ArmoredMosquito.js?v=3';
+import { StealthMosquito } from '../entities/StealthMosquito.js?v=3';
+import { Trap } from '../entities/Trap.js?v=3';
+import { Boss } from '../entities/Boss.js?v=3';
+import { CANVAS_WIDTH, CANVAS_HEIGHT } from '../utils/Constants.js?v=3';
+import { randomRange, randomInt } from '../utils/MathUtils.js?v=3';
 
 export class WaveManager {
     constructor(game) {

@@ -4,8 +4,8 @@
  * 繪製 HP 條、分數、Combo、波次資訊、浮動得分文字。
  */
 
-import { CANVAS_WIDTH, CANVAS_HEIGHT } from '../utils/Constants.js?v=2';
-import { clamp } from '../utils/MathUtils.js?v=2';
+import { CANVAS_WIDTH, CANVAS_HEIGHT } from '../utils/Constants.js?v=3';
+import { clamp } from '../utils/MathUtils.js?v=3';
 
 export class HUD {
     /**

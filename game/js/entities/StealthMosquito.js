@@ -5,9 +5,9 @@
  * 有微弱的漣漪提示。
  */
 
-import { Mosquito } from './Mosquito.js?v=2';
-import { ENEMY_CONFIG } from '../utils/Constants.js?v=2';
-import { clamp } from '../utils/MathUtils.js?v=2';
+import { Mosquito } from './Mosquito.js?v=3';
+import { ENEMY_CONFIG } from '../utils/Constants.js?v=3';
+import { clamp } from '../utils/MathUtils.js?v=3';
 
 export class StealthMosquito extends Mosquito {
     constructor(x, y) {

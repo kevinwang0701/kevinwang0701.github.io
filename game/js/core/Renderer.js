@@ -4,7 +4,7 @@
  * 封裝 Canvas 2D Context，所有繪製操作使用邏輯座標（1920×1080）。
  */
 
-import { CANVAS_WIDTH, CANVAS_HEIGHT } from '../utils/Constants.js?v=2';
+import { CANVAS_WIDTH, CANVAS_HEIGHT } from '../utils/Constants.js?v=3';
 
 export class Renderer {
     /**

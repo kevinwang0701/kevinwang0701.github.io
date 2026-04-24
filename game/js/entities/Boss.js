@@ -5,9 +5,9 @@
  * HP 低於 30% 進入狂暴。毒液彈會反轉玩家游標。
  */
 
-import { Entity } from './Entity.js?v=2';
-import { BOSS_CONFIG, CANVAS_WIDTH, CANVAS_HEIGHT } from '../utils/Constants.js?v=2';
-import { randomRange, distance, angle } from '../utils/MathUtils.js?v=2';
+import { Entity } from './Entity.js?v=3';
+import { BOSS_CONFIG, CANVAS_WIDTH, CANVAS_HEIGHT } from '../utils/Constants.js?v=3';
+import { randomRange, distance, angle } from '../utils/MathUtils.js?v=3';
 
 export class Boss extends Entity {
     constructor(x, y) {

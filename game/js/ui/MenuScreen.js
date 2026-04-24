@@ -4,9 +4,9 @@
  * 遊戲標題動畫 + 開始按鈕 + 背景裝飾蚊子
  */
 
-import { CANVAS_WIDTH, CANVAS_HEIGHT } from '../utils/Constants.js?v=2';
-import { randomRange } from '../utils/MathUtils.js?v=2';
-import { pointInRect } from '../utils/CollisionUtils.js?v=2';
+import { CANVAS_WIDTH, CANVAS_HEIGHT } from '../utils/Constants.js?v=3';
+import { randomRange } from '../utils/MathUtils.js?v=3';
+import { pointInRect } from '../utils/CollisionUtils.js?v=3';
 
 export class MenuScreen {
     /**

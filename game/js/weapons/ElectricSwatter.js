@@ -5,9 +5,9 @@
  * 消耗電量槽，鬆開後自動回充。
  */
 
-import { Weapon } from './Weapon.js?v=2';
-import { WEAPON_CONFIG } from '../utils/Constants.js?v=2';
-import { lineIntersectCircle } from '../utils/CollisionUtils.js?v=2';
+import { Weapon } from './Weapon.js?v=3';
+import { WEAPON_CONFIG } from '../utils/Constants.js?v=3';
+import { lineIntersectCircle } from '../utils/CollisionUtils.js?v=3';
 
 export class ElectricSwatter extends Weapon {
     constructor() {

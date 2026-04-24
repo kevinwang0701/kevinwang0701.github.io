@@ -5,8 +5,8 @@
  * 有使用次數限制 + 噴灑動畫。
  */
 
-import { Weapon } from './Weapon.js?v=2';
-import { WEAPON_CONFIG, CANVAS_WIDTH, CANVAS_HEIGHT } from '../utils/Constants.js?v=2';
+import { Weapon } from './Weapon.js?v=3';
+import { WEAPON_CONFIG, CANVAS_WIDTH, CANVAS_HEIGHT } from '../utils/Constants.js?v=3';
 
 export class Insecticide extends Weapon {
     constructor() {
@@ -162,6 +162,8 @@ export class Insecticide extends Weapon {
     }
 
     addUses(amount) {
-        this.remainingUses = Math.min(this.maxUses + 2, this.remainingUses + amount);
+        // 升級上限：初始 3 + 補充升級最高 3 級，再預留緩衝
+        const hardCap = 10;
+        this.remainingUses = Math.min(hardCap, this.remainingUses + amount);
     }
 }

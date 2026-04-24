@@ -4,7 +4,7 @@
  * 關燈模式 + 狂熱時間
  */
 
-import { CANVAS_WIDTH, CANVAS_HEIGHT } from '../utils/Constants.js?v=2';
+import { CANVAS_WIDTH, CANVAS_HEIGHT } from '../utils/Constants.js?v=3';
 
 export class SpecialMode {
     constructor(game) {

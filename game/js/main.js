@@ -2,7 +2,7 @@
  * main.js — 遊戲進入點
  */
 
-import { Game } from './core/Game.js?v=2';
+import { Game } from './core/Game.js?v=3';
 
 function init() {
     try {

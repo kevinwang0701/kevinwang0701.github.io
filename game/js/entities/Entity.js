@@ -2,7 +2,7 @@
  * Entity.js — 遊戲實體抽象基礎類別
  */
 
-import { circleIntersect } from '../utils/CollisionUtils.js?v=2';
+import { circleIntersect } from '../utils/CollisionUtils.js?v=3';
 
 export class Entity {
     /**

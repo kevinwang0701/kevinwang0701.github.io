@@ -2,7 +2,7 @@
  * ComboSystem.js — Combo 連擊系統
  */
 
-import { COMBO_CONFIG } from '../utils/Constants.js?v=2';
+import { COMBO_CONFIG } from '../utils/Constants.js?v=3';
 
 export class ComboSystem {
     constructor() {

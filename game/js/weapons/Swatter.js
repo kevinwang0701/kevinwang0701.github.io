@@ -5,9 +5,9 @@
  * 附帶揮擊動畫與衝擊波效果。
  */
 
-import { Weapon } from './Weapon.js?v=2';
-import { WEAPON_CONFIG } from '../utils/Constants.js?v=2';
-import { pointInCircle } from '../utils/CollisionUtils.js?v=2';
+import { Weapon } from './Weapon.js?v=3';
+import { WEAPON_CONFIG } from '../utils/Constants.js?v=3';
+import { pointInCircle } from '../utils/CollisionUtils.js?v=3';
 
 export class Swatter extends Weapon {
     constructor() {

@@ -5,9 +5,9 @@
  * 停留吸血越久分數越高，但飛走會扣玩家 HP。
  */
 
-import { Entity } from './Entity.js?v=2';
-import { ENEMY_CONFIG, CANVAS_WIDTH, CANVAS_HEIGHT } from '../utils/Constants.js?v=2';
-import { randomRange, randomInt, distance, angle, lerp } from '../utils/MathUtils.js?v=2';
+import { Entity } from './Entity.js?v=3';
+import { ENEMY_CONFIG, CANVAS_WIDTH, CANVAS_HEIGHT } from '../utils/Constants.js?v=3';
+import { randomRange, randomInt, distance, angle, lerp } from '../utils/MathUtils.js?v=3';
 
 export class Mosquito extends Entity {
     /**
@@ -145,13 +145,17 @@ export class Mosquito extends Entity {
         const dy = this.targetPosition.y - this.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
 
-        const moveSpeed = this.speed * 80 * deltaTime; // 離場時加速
-        this.x += (dx / dist) * moveSpeed;
-        this.y += (dy / dist) * moveSpeed;
+        // 避免 dist 過小時除以 0 造成 NaN，在 target 附近直接當作越過
+        if (dist > 0.5) {
+            const moveSpeed = this.speed * 80 * deltaTime; // 離場時加速
+            this.x += (dx / dist) * moveSpeed;
+            this.y += (dy / dist) * moveSpeed;
+        }
 
-        // 飛出畫面範圍後標記死亡（不算擊殺）
-        if (this.x < -100 || this.x > CANVAS_WIDTH + 100 ||
-            this.y < -100 || this.y > CANVAS_HEIGHT + 100) {
+        // 只要精靈完全離開可見畫面即標記逃走（以 sprite 尺寸為邊界，避免
+        // target 在 ±80 而判定邊界在 ±100 造成的抖動卡住問題）
+        if (this.x + this.width < 0 || this.x > CANVAS_WIDTH ||
+            this.y + this.height < 0 || this.y > CANVAS_HEIGHT) {
             this.isAlive = false;
             this._escaped = true; // 標記為逃走（需扣血）
         }

@@ -5,8 +5,8 @@
  * 青蛙：定時伸舌捕捉蚊子
  */
 
-import { CANVAS_WIDTH, CANVAS_HEIGHT } from '../utils/Constants.js?v=2';
-import { distance } from '../utils/MathUtils.js?v=2';
+import { CANVAS_WIDTH, CANVAS_HEIGHT } from '../utils/Constants.js?v=3';
+import { distance } from '../utils/MathUtils.js?v=3';
 
 export class PassiveSystem {
     constructor(game) {

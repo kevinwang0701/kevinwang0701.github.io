@@ -4,26 +4,26 @@
  * 完整版：整合所有敵人/武器/系統/UI。
  */
 
-import { GAME_STATES, CANVAS_WIDTH, CANVAS_HEIGHT } from '../utils/Constants.js?v=2';
-import { GameLoop } from './GameLoop.js?v=2';
-import { InputHandler } from './InputHandler.js?v=2';
-import { Renderer } from './Renderer.js?v=2';
-import { PlayerState } from '../entities/PlayerState.js?v=2';
-import { ComboSystem } from '../systems/ComboSystem.js?v=2';
-import { WaveManager } from '../systems/WaveManager.js?v=2';
-import { UpgradeSystem } from '../systems/UpgradeSystem.js?v=2';
-import { PassiveSystem } from '../systems/PassiveSystem.js?v=2';
-import { SpecialMode } from '../systems/SpecialMode.js?v=2';
-import { Swatter } from '../weapons/Swatter.js?v=2';
-import { ElectricSwatter } from '../weapons/ElectricSwatter.js?v=2';
-import { Insecticide } from '../weapons/Insecticide.js?v=2';
-import { HUD } from '../ui/HUD.js?v=2';
-import { MenuScreen } from '../ui/MenuScreen.js?v=2';
-import { PauseScreen } from '../ui/PauseScreen.js?v=2';
-import { GameOverScreen } from '../ui/GameOverScreen.js?v=2';
-import { UpgradeShop } from '../ui/UpgradeShop.js?v=2';
-import { pointInCircle } from '../utils/CollisionUtils.js?v=2';
-import { Mosquito } from '../entities/Mosquito.js?v=2';
+import { GAME_STATES, CANVAS_WIDTH, CANVAS_HEIGHT } from '../utils/Constants.js?v=3';
+import { GameLoop } from './GameLoop.js?v=3';
+import { InputHandler } from './InputHandler.js?v=3';
+import { Renderer } from './Renderer.js?v=3';
+import { PlayerState } from '../entities/PlayerState.js?v=3';
+import { ComboSystem } from '../systems/ComboSystem.js?v=3';
+import { WaveManager } from '../systems/WaveManager.js?v=3';
+import { UpgradeSystem } from '../systems/UpgradeSystem.js?v=3';
+import { PassiveSystem } from '../systems/PassiveSystem.js?v=3';
+import { SpecialMode } from '../systems/SpecialMode.js?v=3';
+import { Swatter } from '../weapons/Swatter.js?v=3';
+import { ElectricSwatter } from '../weapons/ElectricSwatter.js?v=3';
+import { Insecticide } from '../weapons/Insecticide.js?v=3';
+import { HUD } from '../ui/HUD.js?v=3';
+import { MenuScreen } from '../ui/MenuScreen.js?v=3';
+import { PauseScreen } from '../ui/PauseScreen.js?v=3';
+import { GameOverScreen } from '../ui/GameOverScreen.js?v=3';
+import { UpgradeShop } from '../ui/UpgradeShop.js?v=3';
+import { pointInCircle } from '../utils/CollisionUtils.js?v=3';
+import { Mosquito } from '../entities/Mosquito.js?v=3';
 
 export class Game {
     constructor(canvas) {
@@ -411,6 +411,13 @@ export class Game {
 
     _handleAttack() {
         const { x, y } = this.input.cursorPosition;
+
+        // 蒼蠅拍在冷卻中不應被當作「揮空」，直接忽略點擊
+        if (this.currentWeapon.id === 'swatter' &&
+            !this.currentWeapon.isReady(this.gameTime)) {
+            return;
+        }
+
         const hitEnemies = this.currentWeapon.attack(x, y, this.enemies, this.gameTime);
         this._processHits(hitEnemies);
 
@@ -548,9 +555,15 @@ export class Game {
 
         // 武器切換（只在遊戲中）
         if (this.state === GAME_STATES.PLAYING) {
+            const prev = this.currentWeapon;
             if (e.key === '1') { this._weaponIndex = 0; this.currentWeapon = this._weapons[0]; }
             if (e.key === '2') { this._weaponIndex = 1; this.currentWeapon = this._weapons[1]; }
             if (e.key === '3') { this._weaponIndex = 2; this.currentWeapon = this._weapons[2]; }
+
+            // 切換離開電蚊拍時，關閉其啟動狀態避免殘留軌跡 / 持續扣電
+            if (prev !== this.currentWeapon && prev.id === 'electric_swatter' && prev.isActive) {
+                prev.stopUse();
+            }
         }
     }
 }

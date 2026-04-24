@@ -4,8 +4,8 @@
  * 波次之間顯示，玩家可用分數購買升級。
  */
 
-import { CANVAS_WIDTH, CANVAS_HEIGHT } from '../utils/Constants.js?v=2';
-import { pointInRect } from '../utils/CollisionUtils.js?v=2';
+import { CANVAS_WIDTH, CANVAS_HEIGHT } from '../utils/Constants.js?v=3';
+import { pointInRect } from '../utils/CollisionUtils.js?v=3';
 
 export class UpgradeShop {
     constructor(game) {

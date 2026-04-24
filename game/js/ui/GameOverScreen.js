@@ -2,8 +2,8 @@
  * GameOverScreen.js — 遊戲結束畫面
  */
 
-import { CANVAS_WIDTH, CANVAS_HEIGHT } from '../utils/Constants.js?v=2';
-import { pointInRect } from '../utils/CollisionUtils.js?v=2';
+import { CANVAS_WIDTH, CANVAS_HEIGHT } from '../utils/Constants.js?v=3';
+import { pointInRect } from '../utils/CollisionUtils.js?v=3';
 
 export class GameOverScreen {
     /**

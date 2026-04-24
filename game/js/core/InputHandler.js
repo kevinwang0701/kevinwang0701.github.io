@@ -4,7 +4,7 @@
  * 統一管理滑鼠與觸控事件，螢幕座標 → Canvas 邏輯座標轉換。
  */
 
-import { CANVAS_WIDTH, CANVAS_HEIGHT } from '../utils/Constants.js?v=2';
+import { CANVAS_WIDTH, CANVAS_HEIGHT } from '../utils/Constants.js?v=3';
 
 export class InputHandler {
     /**

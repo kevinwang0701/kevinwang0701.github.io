@@ -8,9 +8,9 @@
  * - 分數更高
  */
 
-import { Mosquito } from './Mosquito.js?v=2';
-import { ENEMY_CONFIG } from '../utils/Constants.js?v=2';
-import { randomRange } from '../utils/MathUtils.js?v=2';
+import { Mosquito } from './Mosquito.js?v=3';
+import { ENEMY_CONFIG } from '../utils/Constants.js?v=3';
+import { randomRange } from '../utils/MathUtils.js?v=3';
 
 export class AgileMosquito extends Mosquito {
     constructor(x, y) {

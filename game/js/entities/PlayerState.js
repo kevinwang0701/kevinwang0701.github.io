@@ -2,7 +2,7 @@
  * PlayerState.js — 玩家狀態管理
  */
 
-import { PLAYER_DEFAULTS } from '../utils/Constants.js?v=2';
+import { PLAYER_DEFAULTS } from '../utils/Constants.js?v=3';
 
 export class PlayerState {
     constructor() {

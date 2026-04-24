@@ -2,8 +2,8 @@
  * PauseScreen.js — 暫停畫面（Phase 2 基本版）
  */
 
-import { CANVAS_WIDTH, CANVAS_HEIGHT } from '../utils/Constants.js?v=2';
-import { pointInRect } from '../utils/CollisionUtils.js?v=2';
+import { CANVAS_WIDTH, CANVAS_HEIGHT } from '../utils/Constants.js?v=3';
+import { pointInRect } from '../utils/CollisionUtils.js?v=3';
 
 export class PauseScreen {
     constructor(game) {
